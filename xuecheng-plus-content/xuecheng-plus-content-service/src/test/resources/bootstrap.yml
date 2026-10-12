@@ -1,13 +1,18 @@
-#微服务配置
 spring:
+  profiles:
+    active: dev_1
   application:
     name: content-service
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.101.65:3306/xc402_content?serverTimezone=UTC&userUnicode=true&useSSL=false&
-    username: root
-    password: mysql
-# 日志文件配置路径
+  cloud:
+    nacos:
+      server-addr: 192.168.100.128:8848
+      discovery:
+        namespace: dev_1
+        group: learnpro06
+      config:
+        namespace: dev_1
+        group: learnpro06
+        file-extension: yaml
+        refresh-enabled: true
 logging:
   config: classpath:log4j2-dev.xml
-

@@ -2,22 +2,31 @@ server:
   servlet:
     context-path: /content
   port: 63040
-#微服务配置
 spring:
+  profiles:
+    active: dev_1
   application:
     name: content-api
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://192.168.100.128:3306/xc06_content?serverTimezone=UTC&userUnicode=true&useSSL=false&
-    username: root
-    password: 123
-# 日志文件配置路径
-logging:
-  config: classpath:log4j2-dev.xml
+  cloud:
+    nacos:
+      server-addr: 192.168.100.128:8848
+      discovery:
+        namespace: dev_1
+        group: learnpro06
+      config:
+        namespace: dev_1
+        group: learnpro06
+        file-extension: yaml
+        refresh-enabled: true
+        extension-configs:
+          - data-id: content-service-${spring.profiles.active}.yaml
+            group: learnpro06
+            refresh: true
+        shared-configs:
+          - data-id: swagger-${spring.profiles.active}.yaml
+            group: learnpro06
+            refresh: true
+          - data-id: logging-${spring.profiles.active}.yaml
+            group: learnpro06
+            refresh: true
 
-swagger:
-  title: "学成在线内容管理系统"
-  description: "内容系统管理系统对课程相关信息进行管理"
-  base-package: com.xuecheng.content
-  enabled: true
-  version: 1.0.0
