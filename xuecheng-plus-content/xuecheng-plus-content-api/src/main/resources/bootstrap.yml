@@ -1,32 +1,29 @@
-server:
-  servlet:
-    context-path: /content
-  port: 63040
+
 spring:
   profiles:
-    active: dev_1
+    active: dev
   application:
     name: content-api
   cloud:
     nacos:
       server-addr: 192.168.100.128:8848
       discovery:
-        namespace: dev_1
-        group: learnpro06
+        namespace: dev
+        group: xuecheng-plus-project
       config:
-        namespace: dev_1
-        group: learnpro06
+        namespace: dev
+        group: xuecheng-plus-project
         file-extension: yaml
         refresh-enabled: true
         extension-configs:
           - data-id: content-service-${spring.profiles.active}.yaml
-            group: learnpro06
+            group: xuecheng-plus-project
             refresh: true
         shared-configs:
           - data-id: swagger-${spring.profiles.active}.yaml
-            group: learnpro06
+            group: xuecheng-plus-project
             refresh: true
           - data-id: logging-${spring.profiles.active}.yaml
-            group: learnpro06
+            group: xuecheng-plus-project
             refresh: true
 
