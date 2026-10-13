@@ -37,5 +37,20 @@ public class TeachplanController {
     public void saveTeachplan( @RequestBody SaveTeachplanDto teachplan){
         teachplanService.saveTeachplan(teachplan);
     }
+    @ApiOperation("删除课程计划")
+    @DeleteMapping("/teachplan/{teachplanId}")
+    public void deleteTeachplan(@PathVariable Long teachplanId){
+        teachplanService.deleteTeachplan(teachplanId);
+    }
+    @ApiOperation("课程计划上移")
+    @PostMapping("/teachplan/moveup/{teachplanId}")
+    public void moveUp(@PathVariable Long teachplanId){
+        teachplanService.moveTeachplan("moveup", teachplanId);
+    }
 
+    @ApiOperation("课程计划下移")
+    @PostMapping("/teachplan/movedown/{teachplanId}")
+    public void moveDown(@PathVariable Long teachplanId){
+        teachplanService.moveTeachplan("movedown", teachplanId);
+    }
 }

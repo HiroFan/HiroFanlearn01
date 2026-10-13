@@ -1,6 +1,7 @@
 package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.content.mapper.TeachplanMapper;
 import com.xuecheng.content.model.dto.SaveTeachplanDto;
 import com.xuecheng.content.model.dto.TeachplanDto;
@@ -59,5 +60,59 @@ public class TeachplanServiceImpl implements TeachplanService {
             teachplanMapper.updateById(teachplan);
         }
 
+    }
+    @Override
+    public void deleteTeachplan(Long teachplanId) {
+        if(teachplanId == null){
+            XueChengPlusException.cast("课程计划id为空");
+        }
+        LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Teachplan::getParentid, teachplanId);
+        Integer count = teachplanMapper.selectCount(queryWrapper);
+        if(count > 0){
+            XueChengPlusException.cast("120409"+"课程计划信息还有子级信息，无法操作");
+        }
+        teachplanMapper.deleteById(teachplanId);
+    }
+    @Override
+    public void moveTeachplan(String moveType, Long teachplanId) {
+        // 1. 查询当前课程计划
+        Teachplan teachplan = teachplanMapper.selectById(teachplanId);
+        if(teachplan == null){
+            XueChengPlusException.cast("课程计划信息不存在");
+        }
+
+        Long parentid = teachplan.getParentid();       // 父级id（保证同级）
+        Integer currentOrderby = teachplan.getOrderby(); // 当前排序值
+
+        // 2. 找同级的相邻节点
+        LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Teachplan::getParentid, parentid);
+
+        if("moveup".equals(moveType)){
+            // 上移：找 orderby < 当前 的最大的那条
+            queryWrapper.lt(Teachplan::getOrderby, currentOrderby);
+            queryWrapper.orderByDesc(Teachplan::getOrderby);
+        }else if("movedown".equals(moveType)){
+            // 下移：找 orderby > 当前 的最小的那条
+            queryWrapper.gt(Teachplan::getOrderby, currentOrderby);
+            queryWrapper.orderByAsc(Teachplan::getOrderby);
+        }else{
+            XueChengPlusException.cast("移动类型参数错误");
+        }
+        queryWrapper.last("limit 1");
+        Teachplan neighbor = teachplanMapper.selectOne(queryWrapper);
+
+        // 3. 没找到邻居说明已在最顶/最底，直接返回
+        if(neighbor == null){
+            return;
+        }
+
+        // 4. 交换 orderby
+        Integer neighborOrderby = neighbor.getOrderby();
+        teachplan.setOrderby(neighborOrderby);
+        neighbor.setOrderby(currentOrderby);
+        teachplanMapper.updateById(teachplan);
+        teachplanMapper.updateById(neighbor);
     }
 }
