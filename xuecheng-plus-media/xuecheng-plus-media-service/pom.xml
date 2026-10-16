@@ -76,7 +76,11 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
         </dependency>
-
+        <!-- xxl-job 依赖 -->
+        <dependency>
+            <groupId>com.xuxueli</groupId>
+            <artifactId>xxl-job-core</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

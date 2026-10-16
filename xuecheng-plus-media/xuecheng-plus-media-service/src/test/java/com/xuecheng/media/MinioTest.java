@@ -3,6 +3,8 @@ package com.xuecheng.media;
 import io.minio.*;
 import io.minio.errors.MinioException;
 import io.minio.http.Method;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import org.junit.Test;
 
@@ -14,6 +16,9 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @description 测试MinIO 完整功能：桶创建、上传、下载、查询列表、查看元信息、获取url、删除、MD5
@@ -27,16 +32,69 @@ public class MinioTest {
             .endpoint("http://192.168.100.128:9001")
             .credentials("minioadmin", "minioadmin123")
             .build();
+    //将分块文件上传至minio
+    @Test
+    public void uploadChunk(){
+        String chunkFolderPath = "D:\\develop\\upload\\chunk\\";
+        File chunkFolder = new File(chunkFolderPath);
+        //分块文件
+        File[] files = chunkFolder.listFiles();
+        //将分块文件上传至minio
+        for (int i = 0; i < files.length; i++) {
+            try {
+                UploadObjectArgs uploadObjectArgs = UploadObjectArgs.builder().bucket("testbucket").object("chunk/" + i).filename(files[i].getAbsolutePath()).build();
+                minioClient.uploadObject(uploadObjectArgs);
+                System.out.println("上传分块成功"+i);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
 
+    }
+    //合并文件，要求分块文件最小5M
+    @Test
+    public void test_merge() throws Exception {
+        List<ComposeSource> sources = Stream.iterate(0, i -> ++i)
+                .limit(6)
+                .map(i -> ComposeSource.builder()
+                        .bucket("testbucket")
+                        .object("chunk/".concat(Integer.toString(i)))
+                        .build())
+                .collect(Collectors.toList());
+
+        ComposeObjectArgs composeObjectArgs = ComposeObjectArgs.builder().bucket("testbucket").object("merge01.mp4").sources(sources).build();
+        minioClient.composeObject(composeObjectArgs);
+
+    }
+    //清除分块文件
+    @Test
+    public void test_removeObjects(){
+        //合并分块完成将分块文件清除
+        List<DeleteObject> deleteObjects = Stream.iterate(0, i -> ++i)
+                .limit(6)
+                .map(i -> new DeleteObject("chunk/".concat(Integer.toString(i))))
+                .collect(Collectors.toList());
+
+        RemoveObjectsArgs removeObjectsArgs = RemoveObjectsArgs.builder().bucket("testbucket").objects(deleteObjects).build();
+        Iterable<Result<DeleteError>> results = minioClient.removeObjects(removeObjectsArgs);
+        results.forEach(r->{
+            DeleteError deleteError = null;
+            try {
+                deleteError = r.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
     // ========== 1. 判断桶是否存在，不存在新建桶 ==========
     @Test
     public void testBucket() throws Exception {
-        boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket("hirofan01").build());
+        boolean exists = minioClient.bucketExists(BucketExistsArgs.builder().bucket("hirofanother").build());
         if (!exists) {
-            minioClient.makeBucket(MakeBucketArgs.builder().bucket("hirofan01").build());
-            System.out.println("桶 hirofan01 创建成功");
+            minioClient.makeBucket(MakeBucketArgs.builder().bucket("hirofanother").build());
+            System.out.println("桶 hirofanother 创建成功");
         } else {
-            System.out.println("桶 hirofan01 已存在");
+            System.out.println("桶 hirofanother 已存在");
         }
     }
 
